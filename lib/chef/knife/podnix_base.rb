@@ -3,10 +3,13 @@ require 'chef/knife'
 class Chef
   class Knife
     module PodnixBase
-      def configure
-        Podnix.configure do |config|
-          config.username = Podnix_user
-          config.password = Podnix_password
+
+      def validate!
+        if (!podnix_apikey)
+          ui.error "You did not configure your podnix_api_key"
+          ui.error "either export PODNIX_API_KEY in .bashrc"
+          ui.error "or configure podnix_api_key in knife.rb"
+          exit 1
         end
       end
 
@@ -15,24 +18,12 @@ class Chef
           ui.info "#{ui.color(label, color)}: #{value}"
         end
       end
-
-      def validate!
-        if (!Podnix_password || !Podnix_user)
-          ui.error "You did not configure your Podnix credentials"
-          ui.error "either export Podnix_USER and Podnix_PASSWORD"
-          ui.error "or configure Podnix_user and Podnix_password in your chef.rb"
-          exit 1
-        end
+      
+      def podnix_apikey
+        locate_config_value(:podnix_api_key) || ENV['PODNIX_API_KEY']
       end
-
-      def Podnix_user
-        locate_config_value(:Podnix_user) || ENV['Podnix_USER']
-      end
-
-      def Podnix_password
-        locate_config_value(:Podnix_password) || ENV['Podnix_PASSWORD']
-      end
-
+      
+      
       def wait_for msg, &block
         print msg
         while !block.call
@@ -56,7 +47,8 @@ class Chef
         ssh.config[:on_error] = :raise
         ssh
       end
-
+      
+      
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]

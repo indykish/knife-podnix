@@ -1,6 +1,6 @@
 require 'chef/knife'
 require 'chef/json_compat'
-require_relative 'Podnix_base'
+require_relative 'podnix_base'
 
 class Chef
   class Knife
@@ -9,7 +9,7 @@ class Chef
       deps do
         require 'net/ssh'
         require 'net/ssh/multi'
-        require 'Podnix'
+        require 'podnix'
         require 'highline'
         require 'chef/knife/bootstrap'
         require 'chef/knife/core/bootstrap_context'
@@ -23,7 +23,7 @@ class Chef
       include Knife::PodnixBase
 
 
-      banner "knife Podnix server create OPTIONS"
+      banner "knife podnix server create OPTIONS"
 
       option :datacenter_name,
         :short => "-D DATACENTER_NAME",

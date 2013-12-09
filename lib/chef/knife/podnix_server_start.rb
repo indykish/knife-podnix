@@ -14,7 +14,7 @@ class Chef
 
       include Chef::Knife::PodnixBase
 
-      banner "knife podnix server list OPTIONS"
+      banner "knife podnix server start SERVER_NAME OPTIONS"
 
       option :podnix_api_key,
         :short => "-K PODNIX_API_KEY",

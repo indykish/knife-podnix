@@ -1,10 +1,10 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "knife/podnix/version"
+require "chef/podnix/version"
 
 Gem::Specification.new do |s|
   s.name        = "knife-podnix"
-  s.version     = Knife::Podnix::VERSION
+  s.version     = Chef::Podnix::VERSION
   s.authors     = ["Kishorekumar Neelamegam, Thomas Alrin"]
   s.email       = ["nkishore@megam.co.in","alrin@megam.co.in"]
   s.homepage    = "http://github.com/indykish/knife-podnix"

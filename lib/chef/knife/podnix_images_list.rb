@@ -1,45 +1,43 @@
 require 'chef/knife'
 require 'chef/json_compat'
 
-require_relative 'Podnix_base'
+require_relative 'podnix_base'
 class Chef
   class Knife
     class PodnixImageList < Knife
-      require_relative 'Podnix_base'
+      require_relative 'podnix_base'
       deps do
-        require 'Podnix'
+        require 'podnix'
         require 'highline'
         Chef::Knife.load_deps
       end
 
       include Chef::Knife::PodnixBase
 
-      banner "knife Podnix image list OPTIONS"
-
+      option :podnix_api_key,
+        :short => "-K PODNIX_API_KEY",
+        :long => "--podnix_api_key PODNIX_API_KEY",
+        :description => "Podnix API key",
+        :default => Chef::Config[:knife][:podnix_api_key]
+        
+              banner "knife podnix image list OPTIONS"
+              
       def run
-        configure
-        images = Podnix::Image.all
+        validate!
+        @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
+        po_images = @podnix.get_images
 
         image_list = [
             ui.color('ID', :bold),
-            ui.color('Name', :bold),
-            ui.color('Memory hotplug', :bold),
-            ui.color('CPU hotplug', :bold),
-            ui.color('Size', :bold),
-            ui.color('Region', :bold),
-        ]
+            ui.color('Name', :bold)]
 
-        images.each do |i|
-          next if i.type != "HDD"
-          image_list << i.id
-          image_list << i.name
-          image_list << i.memory_hotpluggable.to_s
-          image_list << i.cpu_hotpluggable.to_s
-          image_list << i.size.to_s
-          image_list << i.region.to_s
+
+        po_images.data[:body]['data'].each do |im|
+          image_list << im['id']
+          image_list << im['name']
         end
-
-        puts ui.list(image_list, :uneven_columns_across, 6)
+	puts ui.color("Images Listed Successfully", :green)
+        puts ui.list(image_list, :uneven_columns_across, 2)
       end
     end
   end
