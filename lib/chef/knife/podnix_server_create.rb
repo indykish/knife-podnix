@@ -1,7 +1,7 @@
 require 'chef/knife'
 require 'chef/json_compat'
-require_relative 'podnix_base'
 
+require_relative 'podnix_base'
 class Chef
   class Knife
     class PodnixServerCreate < Knife
@@ -22,7 +22,6 @@ class Chef
       end
       include Knife::PodnixBase
 
-
       banner "knife podnix server create OPTIONS"
 
       option :name,
@@ -30,37 +29,34 @@ class Chef
         :long => "--name SERVER_NAME",
         :description => "name for the newly created Server",
         :required => true #,
-       # :proc => Proc.new { |image| Chef::Config[:knife][:Podnix_server_name] = image }
-
+      # :proc => Proc.new { |image| Chef::Config[:knife][:Podnix_server_name] = image }
 
       option :podnix_api_key,
         :short => "-K PODNIX_API_KEY",
         :long => "--podnix_api_key PODNIX_API_KEY",
         :description => "Podnix API key",
         :default => Chef::Config[:knife][:podnix_api_key]
-        
-        
+
       option :flavor,
         :short => "-f FLAVOR",
         :long => "--flavor FLAVOR",
         :description => "the amount of vCores and RAM that your server will get. MODEL IN PODNIX [1, 2, 4, 8], default 1",
         :required => true,
         :proc => Proc.new { |flavor| Chef::Config[:knife][:podnix_flavor] = flavor }
-        
-                
+
       option :password,
         :short => "-P PASSWORD",
         :long => "--password PASSWORD",
         :description => "Specifies the root password (on Linux) or administrator password (on Windows). Must contain at least 9 chars and include a lower case char, an upper case char and a number",
         :required => true,
         :proc => Proc.new { |password| Chef::Config[:knife][:podnix_password] = password }
-        
+
       option :storage,
         :long => "--storage SIZE",
         :description => "Specify the size (in GB) of the system drive. Valid size is 10-250",
         :default => '10',
         :proc => Proc.new { |size| Chef::Config[:knife][:podnix_storage] = size }
-        
+
       option :ssd,
         :long => "--ssd 1",
         :description => "If this parameter is set to 1, the system drive will be located on a SSD drive",
@@ -72,7 +68,7 @@ class Chef
         :description => "This image_id will define operating system and pre-installed software. default '37' which is Ubuntu 13.04 (64bit), For more 'knife podnix image list' ",
         :required => true,
         :proc => Proc.new { |i| Chef::Config[:knife][:podnix_image] = i }
-        
+
       option :ssh_user,
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
@@ -85,7 +81,6 @@ class Chef
         :description => "Comma separated list of roles/recipes to apply",
         :proc => lambda { |o| o.split(/[\s,]+/) },
         :default => []
-
 
       option :chef_node_name,
         :short => "-N NAME",
@@ -105,34 +100,66 @@ class Chef
           exit 1
         end
 
-create_hash = {
-:name => "#{config[:name]}",
-:model => "#{config[:flavor]}",
-:image => "#{config[:image]}",
-:password => "#{config[:password]}",
-:storage => "#{config[:storage]}"
-}
-if config[:ssd]
-	create_hash[:ssd] = "1"
-end
+        create_hash = {
+          :name => "#{config[:name]}",
+          :model => "#{config[:flavor]}",
+          :image => "#{config[:image]}",
+          :password => "#{config[:password]}",
+          :storage => "#{config[:storage]}"
+        }
+        if config[:ssd]
+          create_hash[:ssd] = "1"
+        end
 
         @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
-        po_server = @podnix.add_server(create_hash)
-          bootstrap()
-puts "SERVER CREATION ================== > "
-puts po_server.inspect
-puts ui.color("Going to create A new server", :green)
+        @po_server = @podnix.add_server(create_hash)
+        
+        puts ui.color("Server:", :green)
         msg_pair("Name", config[:name])
         msg_pair("Model", config[:flavor])
         msg_pair("Image", config[:image])
         msg_pair("Storage", config[:storage])
         msg_pair("Password", config[:password])
- puts ui.color("Server is being created", :green)
+
+        puts ui.color("Server is being created", :green)
+
+        print "\n#{ui.color("Waiting for instance", :magenta)}"
+
+        # wait for instance to come up before acting against it
+        @po_server.wait_for { print "."; ready? }
+
+        puts("\n")
+
+        msg_pair("Public DNS Name", @po_server.dns_name)
+        msg_pair("Public IP Address", @po_server.public_ip_address)
+        msg_pair("Private DNS Name", @po_server.private_dns_name)
+        msg_pair("Private IP Address", @po_server.private_ip_address)
+
+        wait_for_sshd(ssh_connect_host)
+        
+        bootstrap()
+        
+        puts "\n"
+        msg_pair("Instance ID", @po_server.id)
+        msg_pair("Flavor", @po_server.flavor_id)
+        msg_pair("Placement Group", @po_server.placement_group) unless @po_server.placement_group.nil?
+        msg_pair("Image", @po_server.image_id)
+        msg_pair("Availability Zone", @po_server.availability_zone)
+        msg_pair("Private IP Address", @po_server.private_ip_address)
+        msg_pair("Environment", config[:environment] || '_default')
+        msg_pair("Run List", (config[:run_list] || []).join(', '))
+        msg_pair("JSON Attributes",config[:json_attributes]) unless !config[:json_attributes] || config[:json_attributes].empty?
       end
-      
-       def bootstrap
+
+      end
+
+      def ssh_connect_host
+        @server.dns_name
+      end
+
+      def bootstrap
         bootstrap = Chef::Knife::Bootstrap.new
-        bootstrap.name_args = @server.ips
+        bootstrap.name_args = @po_server.ips
         bootstrap.config[:run_list] = locate_config_value(:run_list)
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
         bootstrap.config[:ssh_password] = @password
@@ -145,8 +172,7 @@ puts ui.color("Going to create A new server", :green)
         # This is a temporary fix until ohai 6.18.0 is released
         ssh("gem install ohai --pre --no-ri --no-rdoc && chef-client").run
       end
-      
-    
+
     end
   end
 end
