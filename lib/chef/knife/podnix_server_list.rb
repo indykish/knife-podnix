@@ -27,17 +27,17 @@ class Chef
         @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         po_servers = @podnix.get_servers
 
-        image_list = [
+        servers_list = [
             ui.color('ID', :bold),
             ui.color('Name', :bold)]
 
 
-        po_images.data[:body]['data'].each do |im|
-          image_list << im['id']
-          image_list << im['name']
+        po_servers.data[:body]['data'].each do |im|
+          servers_list << im['id']
+          servers_list << im['name']
         end
 
-        puts ui.list(image_list, :uneven_columns_across, 2)
+        puts ui.list(servers_list, :uneven_columns_across, 2)
       end
     end
   end

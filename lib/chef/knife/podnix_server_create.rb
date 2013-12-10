@@ -92,6 +92,10 @@ class Chef
         @highline ||= HighLine.new
       end
 
+      def podnix_api
+        Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
+      end
+
       def run
         validate!
 
@@ -111,9 +115,9 @@ class Chef
           create_hash[:ssd] = "1"
         end
 
-        @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
-        @po_server = @podnix.add_server(create_hash)
-        
+        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
+        @po_server = podnix_api.add_server(create_hash)
+
         puts ui.color("Server:", :green)
         msg_pair("Name", config[:name])
         msg_pair("Model", config[:flavor])
@@ -122,36 +126,52 @@ class Chef
         msg_pair("Password", config[:password])
 
         puts ui.color("Server is being created", :green)
+        puts ui.color("Starting Server......", :green)
 
+        #@po_server.wait_for { print "."; ready? }
+        sleep 60
+
+        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
+        @po_start = podnix_api.start_server({:id => "#{@po_server.data[:body]['id']}"})
+        puts "PODNIX SERVER START=====================> "
+        puts @po_start.inspect
+
+        #@po_start.wait_for { print "."; ready? }
+        sleep 60
+
+        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
+        @po_get = podnix_api.get_server({:id => "#{@po_server.data[:body]['id']}"})
+        puts "PODNIX SERVER LIST=====================> "
+        puts @po_get.inspect
+        #=begin
         print "\n#{ui.color("Waiting for instance", :magenta)}"
 
         # wait for instance to come up before acting against it
-        @po_server.wait_for { print "."; ready? }
+        #@po_server.wait_for { print "."; ready? }
 
         puts("\n")
+        @po_server = @po_get.data[:body]['data']
+        msg_pair("Public DNS Name", @po_server['ip'])
+        msg_pair("Public IP Address", @po_server['hostname'])
 
-        msg_pair("Public DNS Name", @po_server.dns_name)
-        msg_pair("Public IP Address", @po_server.public_ip_address)
-        msg_pair("Private DNS Name", @po_server.private_dns_name)
-        msg_pair("Private IP Address", @po_server.private_ip_address)
+        #wait_for_sshd(ssh_connect_host)
 
-        wait_for_sshd(ssh_connect_host)
-        
         bootstrap()
-        
+
         puts "\n"
-        msg_pair("Instance ID", @po_server.id)
-        msg_pair("Flavor", @po_server.flavor_id)
-        msg_pair("Placement Group", @po_server.placement_group) unless @po_server.placement_group.nil?
-        msg_pair("Image", @po_server.image_id)
-        msg_pair("Availability Zone", @po_server.availability_zone)
-        msg_pair("Private IP Address", @po_server.private_ip_address)
-        msg_pair("Environment", config[:environment] || '_default')
+        msg_pair("ID", @po_server['id'])
+        msg_pair("Name", @po_server['name'])
+        msg_pair("Image", @po_server['image'])
+        msg_pair("Password", @po_server['vnc_passwd'])
+        msg_pair("vCores", @po_server['vcores'])
+        msg_pair("RAM", @po_server['ram'])
+        msg_pair("Model", @po_server['model'])
+        msg_pair("Drives", @po_server['drives'])
+        msg_pair("Storage", @po_server['storage'])
         msg_pair("Run List", (config[:run_list] || []).join(', '))
         msg_pair("JSON Attributes",config[:json_attributes]) unless !config[:json_attributes] || config[:json_attributes].empty?
       end
-
-      end
+      #=end
 
       def ssh_connect_host
         @server.dns_name
@@ -159,15 +179,13 @@ class Chef
 
       def bootstrap
         bootstrap = Chef::Knife::Bootstrap.new
-        bootstrap.name_args = @po_server.ips
+        bootstrap.name_args = @po_server.ip
         bootstrap.config[:run_list] = locate_config_value(:run_list)
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-        bootstrap.config[:ssh_password] = @password
+        bootstrap.config[:ssh_password] = locate_config_value(:password)
         bootstrap.config[:host_key_verify] = false
-        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || @server.name
-        bootstrap.config[:distro] = locate_config_value(:distro)
+        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || @po_server.name
         bootstrap.config[:use_sudo] = true unless bootstrap.config[:ssh_user] == 'root'
-        bootstrap.config[:template_file] = locate_config_value(:template_file)
         bootstrap.run
         # This is a temporary fix until ohai 6.18.0 is released
         ssh("gem install ohai --pre --no-ri --no-rdoc && chef-client").run
