@@ -30,6 +30,12 @@ class Chef
         :description => "name for the newly created Server",
         :required => true #,
       # :proc => Proc.new { |image| Chef::Config[:knife][:Podnix_server_name] = image }
+      
+      option :bootstrap,
+        :long => "--[no-]bootstrap",
+        :description => "Bootstrap the server with knife bootstrap",
+        :boolean => true,
+        :default => true
 
       option :podnix_api_key,
         :short => "-K PODNIX_API_KEY",
@@ -81,6 +87,14 @@ class Chef
         :description => "Comma separated list of roles/recipes to apply",
         :proc => lambda { |o| o.split(/[\s,]+/) },
         :default => []
+        
+      option :distro,
+        :short => "-d DISTRO",
+        :long => "--distro DISTRO",
+        :description => "Bootstrap a distro using a template; default is 'chef-full'",
+        :proc => Proc.new { |d| Chef::Config[:knife][:distro] = d },
+        :default => "chef-full"
+        
 
       option :chef_node_name,
         :short => "-N NAME",
@@ -126,7 +140,7 @@ class Chef
         msg_pair("Password", config[:password])
 
         puts ui.color("Server is being created", :green)
-        puts ui.color("Starting Server......", :green)
+        puts ui.color("Creating Server......", :green)
 
         #@po_server.wait_for { print "."; ready? }
         sleep 60
@@ -135,7 +149,7 @@ class Chef
         @po_start = podnix_api.start_server({:id => "#{@po_server.data[:body]['id']}"})
         puts "PODNIX SERVER START=====================> "
         puts @po_start.inspect
-
+        puts ui.color("Starting Server......", :green)
         #@po_start.wait_for { print "."; ready? }
         sleep 60
 
@@ -151,8 +165,8 @@ class Chef
 
         puts("\n")
         @po_server = @po_get.data[:body]['data']
-        msg_pair("Public DNS Name", @po_server['ip'])
-        msg_pair("Public IP Address", @po_server['hostname'])
+        msg_pair("Public DNS Name", @po_server['hostname'])
+        msg_pair("Public IP Address", @po_server['ip'])
 
         #wait_for_sshd(ssh_connect_host)
 
@@ -173,22 +187,19 @@ class Chef
       end
       #=end
 
-      def ssh_connect_host
-        @server.dns_name
-      end
-
       def bootstrap
         bootstrap = Chef::Knife::Bootstrap.new
-        bootstrap.name_args = @po_server.ip
+        bootstrap.name_args = @po_server['ip']
         bootstrap.config[:run_list] = locate_config_value(:run_list)
         bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
         bootstrap.config[:ssh_password] = locate_config_value(:password)
+        bootstrap.config[:distro] = locate_config_value(:distro)
         bootstrap.config[:host_key_verify] = false
-        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || @po_server.name
+        bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || @po_server['name']
         bootstrap.config[:use_sudo] = true unless bootstrap.config[:ssh_user] == 'root'
         bootstrap.run
         # This is a temporary fix until ohai 6.18.0 is released
-        ssh("gem install ohai --pre --no-ri --no-rdoc && chef-client").run
+        #ssh("gem install ohai --pre --no-ri --no-rdoc && chef-client").run
       end
 
     end
