@@ -22,33 +22,7 @@ class Chef
       def podnix_apikey
         locate_config_value(:podnix_api_key) || ENV['PODNIX_API_KEY']
       end
-      
-      
-      def wait_for msg, &block
-        print msg
-        while !block.call
-          print '.'
-          sleep 1
-        end
-        print "\n"
-      end
-
-      def ssh(command)
-        ssh = Chef::Knife::Ssh.new
-        ssh.ui = ui
-        ssh.name_args = [ @server.ips, command ]
-        ssh.config[:ssh_user] = "root"
-        ssh.config[:ssh_password] = @password
-        ssh.config[:ssh_port] = 22
-        #ssh.config[:ssh_gateway] = Chef::Config[:knife][:ssh_gateway] || config[:ssh_gateway]
-        ssh.config[:identity_file] = locate_config_value(:identity_file)
-        ssh.config[:manual] = true
-        ssh.config[:host_key_verify] = false
-        ssh.config[:on_error] = :raise
-        ssh
-      end
-      
-      
+         
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]

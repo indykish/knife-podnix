@@ -28,9 +28,8 @@ class Chef
         :short => "-N SERVER_NAME",
         :long => "--name SERVER_NAME",
         :description => "name for the newly created Server",
-        :required => true #,
-      # :proc => Proc.new { |image| Chef::Config[:knife][:Podnix_server_name] = image }
-      
+        :required => true 
+              
       option :bootstrap,
         :long => "--[no-]bootstrap",
         :description => "Bootstrap the server with knife bootstrap",
@@ -129,7 +128,6 @@ class Chef
           create_hash[:ssd] = "1"
         end
 
-        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         @po_server = podnix_api.add_server(create_hash)
 
         puts ui.color("Server:", :green)
@@ -142,33 +140,20 @@ class Chef
         puts ui.color("Server is being created", :green)
         puts ui.color("Creating Server......", :green)
 
-        #@po_server.wait_for { print "."; ready? }
         sleep 60
 
         #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         @po_start = podnix_api.start_server({:id => "#{@po_server.data[:body]['id']}"})
-        puts "PODNIX SERVER START=====================> "
-        puts @po_start.inspect
         puts ui.color("Starting Server......", :green)
-        #@po_start.wait_for { print "."; ready? }
         sleep 60
 
-        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         @po_get = podnix_api.get_server({:id => "#{@po_server.data[:body]['id']}"})
-        puts "PODNIX SERVER LIST=====================> "
-        puts @po_get.inspect
-        #=begin
         print "\n#{ui.color("Waiting for instance", :magenta)}"
-
-        # wait for instance to come up before acting against it
-        #@po_server.wait_for { print "."; ready? }
 
         puts("\n")
         @po_server = @po_get.data[:body]['data']
         msg_pair("Public DNS Name", @po_server['hostname'])
         msg_pair("Public IP Address", @po_server['ip'])
-
-        #wait_for_sshd(ssh_connect_host)
 
         bootstrap()
 
@@ -182,8 +167,8 @@ class Chef
         msg_pair("Model", @po_server['model'])
         msg_pair("Drives", @po_server['drives'])
         msg_pair("Storage", @po_server['storage'])
-        msg_pair("Run List", (config[:run_list] || []).join(', '))
-        msg_pair("JSON Attributes",config[:json_attributes]) unless !config[:json_attributes] || config[:json_attributes].empty?
+        msg_pair("Run List", (config[:run_list]))
+        #msg_pair("JSON Attributes",config[:json_attributes]) unless !config[:json_attributes] || config[:json_attributes].empty?
       end
       #=end
 
@@ -198,8 +183,6 @@ class Chef
         bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) || @po_server['name']
         bootstrap.config[:use_sudo] = true unless bootstrap.config[:ssh_user] == 'root'
         bootstrap.run
-        # This is a temporary fix until ohai 6.18.0 is released
-        #ssh("gem install ohai --pre --no-ri --no-rdoc && chef-client").run
       end
 
     end

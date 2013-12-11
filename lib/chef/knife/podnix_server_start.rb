@@ -32,9 +32,6 @@ class Chef
         validate!
         @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         po_server = @podnix.start_server({:id => "#{@server_id}"})
-        puts "Start Server =================> "
-        puts po_server.inspect
-
       end
       end
     end
