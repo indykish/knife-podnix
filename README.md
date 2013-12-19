@@ -15,50 +15,45 @@ If building the nokogiri C extension fails have a look at this wiki page: [Nokog
 
 ## CONFIGURATION:
 
-You need to provide you Podnix username and password, either add them to your knife.rb
+You need to provide your Podnix API_KEY, either via options(--podnix_api_key 'PODNIX_API_KEY') or add them to your knife.rb
 
-    podnix_apikey = 'YOUR APIKEY'
+    knife[:podnix_api_key] = "PODNIX_API_KEY"
 
 or store them in environment variables
 
-    export PODNIX_APIKEU=YOURAPIKEY
+    export PODNIX_API_KEY=YOURAPIKEY
 
 
 ## SUBCOMMANDS:
 
-This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a ``--help`` flag
+This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a ``--help`` flag.
 
 ### knife Podnix server create
 
 Provisions a new server and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed
 on the target system so it can run Chef Client with a Chef Server.
 
-During provisioning your public SSH key will be uploaded to the newly created server, thus you should make sure a public key exists at `~/.ssh/id_rsa.pub` or provide a different key via the `--public-key-file` option.
+During provisioning your password will be uploaded to the newly created server, thus you can ssh your server with that password.
 
 The following knife-Podnix options are required:
 
-    -D DATACENTER_NAME,              The datacenter where the server will be created
-        --data-center
-        --name SERVER_NAME           name for the newly created Server
+    -N, --name SERVER_NAME           name for the newly created Server.
+    -f, --flavor                     Specify the model of your server. This will define the amount of vCores 
+                                     and RAM that your server will get. MODEL IN PODNIX(by vcore size) `1, 2, 4, 8`.
+                                     RAM is double the size of VCORE.
+    -P, --password PASSWORD          Specifies the root password (on Linux) or administrator password (on Windows).
+                                     Must contain at least 9 chars and include a lower case char, an upper case char and a number.
+                                     eg:-`Secret123`.
+    -I, --image IMAGE_ID             Specify the image to base your server on. This will define operating system 
+                                     and pre-installed software. Fot more `knife podnix image list`. eg:- `37`for Ubuntu 13.04 (64bit).
 
-These knife-Podnix options are optional:
-
-        --cpus CPUS                  Amount of CPUs of the new Server
-        --ram RAM                    Amount of Memory in MB of the new Server
-        --hdd-size GB                Size of storage in GB
-    -i, --image-name IMAGE_NAME      The image name which will be used to create the initial server 'template',
-                                       default is 'Ubuntu-12.04-LTS-server-amd64-06.21.13.img'
-    -S, --snaphot-name SNAPSHOT_NAME The snapshot name which will be used to create the server
-                                       (can not be used with the image-name option)
-
-    -k PUBLIC_KEY_FILE,              The SSH public key file to be added to the authorized_keys of the given user,
-        --public-key-file              default is '~/.ssh/id_rsa.pub'
-
-    -x, --ssh-user USERNAME          The ssh username
 
 The following are optional options provided by knife:
-
+        --storage SIZE               Specify the size (in GB) of the system drive. Valid size is 10-250. Default is 10.
+        --ssd 1                      If this parameter is set to 1, the system drive will be located on a SSD drive.
         --[no-]bootstrap             Bootstrap the server with knife bootstrap
+
+
     -N, --node-name NAME             The Chef node name for your new node default is the name of the server.
     -s, --server-url URL             Chef Server URL
         --key KEY                    API Client Key
@@ -81,37 +76,43 @@ The following are optional options provided by knife:
     -h, --help                       Show this message
 
 
-### knife Podnix server list
-
-Outputs a list of all servers.
-
 ### knife Podnix image list
 
 Outputs a list of all images.
 
-### knife Podnix server delete
+### knife Podnix server list
 
-Deletes the server running on podnix.
+Outputs a list of all servers.
 
-The following knife-Podnix options are required:
+### knife Podnix server show SERVER_ID
 
-        --name SNAPSHOT_NAME         name for the newly created snapshot
-        --server-id server_id        The server of which the snapshot will be taken
+Outputs the details of a  particular server.
 
-These knife-Podnix options are optional:
+### knife Podnix server start SERVER_ID
 
-        --description description    description for the snapshot
+To start a server which is in stop stat. (Server which is created from UI, will be in stop stat)
+
+### knife Podnix server stop SERVER_ID
+
+To stop a server which is in started stat. (To delete a server, first it must be in stoped)
+
+### knife Podnix server delete SERVER_ID
+
+To delete a server which is in stoped stat. (Driver belongs to this server will `not` be deleted)
+
+### knife podnix server create OPTIONS
+
+Creats a server and a drive in podnix cloud.
+
 
 
 ## EXAMPLE
 
-First you need an existing DataCenter, you can create it via the [DCD](https://my.Podnix.com/dashboard/dcd/) or just use the Podnix command which got installed via the [Podnix](https://github.com/dsander/Podnix) gem which is a dependency of knife-Podnix:
-
-    Podnix data_center create name=demo
+First you need an existing podnix cloud account, you can create it via the [UI console](https://cp.podnix.com/). 
 
 You are now set up to create a new server:
 
-    knife Podnix server create --data-center demo --name test --ram 512 --cpus 1
+    knife podnix server create -f 1 -P Secret123 -I 37 --storage 10 -r 'role[riak],recipe[redis]' -N POGO
 
 
 
