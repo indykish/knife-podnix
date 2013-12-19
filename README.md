@@ -1,21 +1,21 @@
-# Knife Podnix [![Build Status](https://travis-ci.org/indykish/knife-podnix.png?branch=master)](https://travis-ci.org/Podnix/knife-Podnix) [![Coverage Status](https://coveralls.io/repos/Podnix/knife-Podnix/badge.png)](https://coveralls.io/r/Podnix/knife-podnix)
+# Knife podnix [![Build Status](https://travis-ci.org/indykish/knife-podnix.png?branch=master)](https://travis-ci.org/podnix/knife-podnix) [![Coverage Status](https://coveralls.io/repos/podnix/knife-podnix/badge.png)](https://coveralls.io/r/podnix/knife-podnix)
 
-* https://github.com/indykish/knife-Podnix
+* https://github.com/indykish/knife-podnix
 
 ## DESCRIPTION:
 
-This is a knife plugin to create, bootstrap and manage servers on the Podnix IaaS.
+This is a knife plugin to create, bootstrap and manage servers on the podnix IaaS.
 
 ## INSTALLATION:
 
     gem install knife-podnix
 
-If building the nokogiri C extension fails have a look at this wiki page: [Nokogiri-installation](https://github.com/Podnix/knife-Podnix/wiki/Nokogiri-installation)
+If building the nokogiri C extension fails have a look at this wiki page: [Nokogiri-installation](https://github.com/podnix/knife-podnix/wiki/Nokogiri-installation)
 
 
 ## CONFIGURATION:
 
-You need to provide your Podnix API_KEY, either via options(--podnix_api_key 'PODNIX_API_KEY') or add them to your knife.rb
+You need to provide your podnix API_KEY, either via options(`--podnix_api_key 'PODNIX_API_KEY'`) or add them to your knife.rb
 
     knife[:podnix_api_key] = "PODNIX_API_KEY"
 
@@ -28,14 +28,14 @@ or store them in environment variables
 
 This plugin provides the following Knife subcommands. Specific command options can be found by invoking the subcommand with a ``--help`` flag.
 
-### knife Podnix server create
+### knife podnix server create
 
 Provisions a new server and then perform a Chef bootstrap (using the SSH protocol). The goal of the bootstrap is to get Chef installed
 on the target system so it can run Chef Client with a Chef Server.
 
 During provisioning your password will be uploaded to the newly created server, thus you can ssh your server with that password.
 
-The following knife-Podnix options are required:
+The following knife-podnix options are required:
 
     -N, --name SERVER_NAME           name for the newly created Server.
     -f, --flavor                     Specify the model of your server. This will define the amount of vCores 
@@ -76,27 +76,27 @@ The following are optional options provided by knife:
     -h, --help                       Show this message
 
 
-### knife Podnix image list
+### knife podnix image list
 
 Outputs a list of all images.
 
-### knife Podnix server list
+### knife podnix server list
 
 Outputs a list of all servers.
 
-### knife Podnix server show SERVER_ID
+### knife podnix server show SERVER_ID
 
 Outputs the details of a  particular server.
 
-### knife Podnix server start SERVER_ID
+### knife podnix server start SERVER_ID
 
 To start a server which is in stop stat. (Server which is created from UI, will be in stop stat)
 
-### knife Podnix server stop SERVER_ID
+### knife podnix server stop SERVER_ID
 
 To stop a server which is in started stat. (To delete a server, first it must be in stoped)
 
-### knife Podnix server delete SERVER_ID
+### knife podnix server delete SERVER_ID
 
 To delete a server which is in stoped stat. (Driver belongs to this server will `not` be deleted)
 
