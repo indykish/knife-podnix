@@ -45,7 +45,7 @@ class Chef
       option :flavor,
         :short => "-f FLAVOR",
         :long => "--flavor FLAVOR",
-        :description => "the amount of vCores and RAM that your server will get. MODEL IN PODNIX [1, 2, 4, 8], default 1",
+        :description => "the amount of vCores and RAM that your server will get. MODEL IN PODNIX [1, 2, 4, 8]",
         :required => true,
         :proc => Proc.new { |flavor| Chef::Config[:knife][:podnix_flavor] = flavor }
 
@@ -142,7 +142,6 @@ class Chef
 
         sleep 60
 
-        #podnix_api = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
         @po_start = podnix_api.start_server({:id => "#{@po_server.data[:body]['id']}"})
         puts ui.color("Starting Server......", :green)
         sleep 60

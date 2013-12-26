@@ -4,7 +4,7 @@ require 'chef/json_compat'
 require_relative 'podnix_base'
 class Chef
   class Knife
-    class PodnixServerDelete < Knife
+    class PodnixServerStop < Knife
       require_relative 'podnix_base'
       deps do
         require 'podnix'
@@ -14,7 +14,7 @@ class Chef
 
       include Chef::Knife::PodnixBase
 
-      banner "knife podnix server delete SERVER_ID OPTIONS"
+      banner "knife podnix server stop SERVER_ID OPTIONS"
 
       option :podnix_api_key,
         :short => "-K PODNIX_API_KEY",
@@ -31,7 +31,7 @@ class Chef
        
         validate!
         @podnix = Podnix::API.new({:key => "#{config[:podnix_api_key]}"})
-        po_server = @podnix.delete_server({:id => "#{@server_id}"})
+        po_server = @podnix.stop_server({:id => "#{@server_id}"})
       end
       end
     end
